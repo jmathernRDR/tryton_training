@@ -1,19 +1,14 @@
 <?xml version="1.0"?>
 <form>
-    <label name="name" />
-    <field name="name"  colspan="2" />
-    <group id="left" string="" colspan="2" xexpand="0" yalign="1"   >
-        <separator id="date" string="Date" colspan="4" yalign="1" />
+    <label name="name"/>
+    <field name="name"  colspan="2"/>
+    <group id="left" string="" colspan="2" xexpand="0" yalign="1">
+        <separator id="date" string="Date" colspan="4" yalign="1"/>
         <label name="creation_date" yalign="1" />
         <field name="creation_date" yalign="1" />
     </group>
-    <group id="right" string="" colspan="2"   >
-        <separator id="genre" string="Genres" colspan="4" />
+    <group id="right" string="" colspan="2">
+        <separator id="genre" string="Genres" colspan="4"/>
         <field name="genres" height="200"/>
     </group>
-
-
-<!--
-
-  <widget="many2many"height="200"/>-->
 </form>

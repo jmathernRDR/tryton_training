@@ -24,7 +24,8 @@
             <label name="page_count"/>
             <field name="page_count"/>
             <label name="edition_stopped"/>
-            <field name="edition_stopped"/>
+            <field name="edition_stopped" />
+            <field name="exemplaries" height="300" colspan="4"/>
         </page>
     </notebook>
 </form>

@@ -2,6 +2,6 @@
 <tree>
     <field name="id"/>
     <field name="book"/>
-    <field name="acquisition_price"/>
-    <field name="acquisition_date"/>
+    <field name="acquisition_price" width="150"/>
+    <field name="acquisition_date" width="150"/>
 </tree>
