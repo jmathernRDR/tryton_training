@@ -52,6 +52,7 @@ class Author(ModelSQL, ModelView):
 class Book(ModelSQL, ModelView):
     'Book'
     __name__ = 'library.book'
+    _rec_name = 'title'
 
     title = fields.Char('Title', required=True)
     author = fields.Many2One('library.author', 'Author', required=True,
@@ -74,6 +75,8 @@ class Book(ModelSQL, ModelView):
 class Exemplary(ModelSQL, ModelView):
     'Exemplary'
     __name__ = 'library.book.exemplary'
+    _rec_name = 'id'
+
     id = fields.Integer("Identifier", required=True, readonly=True)
     book = fields.Many2One('library.book', 'Book', ondelete='CASCADE',
         required=True)

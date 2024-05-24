@@ -1,3 +1,9 @@
 <?xml version="1.0"?>
 <tree>
+    <field name="title"/>
+    <field name="author"/>
+    <field name="genre"/>
+    <field name="editor"/>
+    <field name="page_count" width="100"/>
+    <field name="edition_stopped" width="120"/>
 </tree>
