@@ -14,7 +14,13 @@
         <field name="editor"/>
         <label name="publication_date"/>
         <field name="publication_date"/>
-        <!--<field name="latest_acquisition_date"/> -->
+        <!-- Rubrique qui ne marche pas ....
+
+        -->
+        <label name="latest_acquisition_date"/>
+        <field name="latest_acquisition_date"/>
+        <label name="isbn"/>
+        <field name="isbn"/>
     </group>
     <notebook colspan="4">
         <page name="summary" col="2">
