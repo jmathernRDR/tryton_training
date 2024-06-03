@@ -12,13 +12,10 @@
         <field name="genre" widget="selection"/>
         <label name="editor"/>
         <field name="editor"/>
-        <label name="publication_date"/>
-        <field name="publication_date"/>
-        <!-- Rubrique qui ne marche pas ....
-
-        -->
-        <label name="latest_acquisition_date"/>
-        <field name="latest_acquisition_date"/>
+        <label name="editor genre"/>
+        <field name="editor_genre"/>
+        <label name="publishing_date"/>
+        <field name="publishing_date"/>
         <label name="isbn"/>
         <field name="isbn"/>
     </group>
@@ -29,11 +26,18 @@
             <separator name="summary" colspan="2"/>
             <field name="summary" colspan="2"/>
         </page>
+        <page name="exemplaries">
+            <field name="exemplaries"/>
+        </page>
         <page id="other_data" string="Other informations">
             <label name="page_count"/>
             <field name="page_count"/>
             <label name="edition_stopped"/>
             <field name="edition_stopped"/>
+            <label name="number_of_exemplaries"/>
+            <field name="number_of_exemplaries"/>
+            <label name="latest_exemplary"/>
+            <field name="latest_exemplary"/>
         </page>
     </notebook>
 </form>

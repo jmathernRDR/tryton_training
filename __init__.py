@@ -3,7 +3,6 @@ from trytond.pool import Pool
 from . import library
 
 
-
 def register():
     Pool.register(
         library.Genre,

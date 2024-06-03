@@ -1,12 +1,7 @@
 <?xml version="1.0"?>
 <tree>
-    <field name="name" />
+    <field name="name" expand="1"/>
+    <field name="latest_book" expand="1"/>
     <field name="birth_date"/>
     <field name="death_date"/>
-    <field name="age"/>
-    <field name="number_of_books"/>
-    <field name="genres"/>
-    <!-- Ne marche pas...
-    <field name="most_recent_book"/>
-    -->
 </tree>

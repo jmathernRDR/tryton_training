@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <tree>
-    <field name="name"/>
+    <field name="name" expand="1"/>
     <field name="creation_date"/>
-    <field name="published_book_count"/>
-    <field name="published_book_1year"/>
 </tree>
