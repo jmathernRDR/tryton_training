@@ -3,10 +3,12 @@ import datetime
 from sql import Window
 from sql.conditionals import Coalesce
 from sql.aggregate import Count, Max
+from sqlalchemy import desc
 
 from trytond.pool import Pool
 from trytond.transaction import Transaction
-from trytond.model import ModelSQL, ModelView, fields, Unique
+from trytond.model import ModelSQL, ModelView, fields
+from trytond.model import Unique
 from trytond.pyson import Eval, If, Bool
 
 __all__ = [
@@ -24,6 +26,8 @@ class Genre(ModelSQL, ModelView):
     __name__ = 'library.genre'
 
     name = fields.Char('Name', required=True)
+    editors = fields.Many2Many('library.editor-library.genre', 'genre',
+                               'editor', 'Editors', readonly=True)
 
 
 class Editor(ModelSQL, ModelView):
@@ -74,50 +78,35 @@ class Author(ModelSQL, ModelView):
                              states={'required': Bool(Eval('death_date', 'False'))},
                              depends=['death_date'])
     death_date = fields.Date('Death date',
-                             domain=[If(Bool(Eval("death_date", False)),
-                                        [("death_date", ">", Eval("birth_date"))],
-                                        [])],
+                             domain=['OR', ('death_date', '=', None),
+                                     ('death_date', '>', Eval('birth_date'))],
                              states={'invisible': ~Eval('birth_date')},
                              depends=['birth_date'])
-
     gender = fields.Selection([('man', 'Man'), ('woman', 'Woman')], 'Gender')
     age = fields.Function(
         fields.Integer('Age', states={'invisible': ~Eval('death_date')}),
-        'getter_age')
+        'on_change_with_age')
     number_of_books = fields.Function(
         fields.Integer('Number of books'),
         'getter_number_of_books')
     genres = fields.Function(
         fields.Many2Many('library.genre', None, None, 'Genres',
-                         states={'invisible': ~Eval('genres')}),
+                         states={'invisible': ~Eval('books', False)}),
         'getter_genres', searcher='searcher_genres')
     latest_book = fields.Function(
         fields.Many2One('library.book', 'Latest Book',
-                        states={'invisible': ~Eval('latest_book', False)}),
+                        states={'invisible': ~Eval('books', False)}),
         'getter_latest_book')
 
-    """Test affichage Lastest_book si le champs publishing_date est également renseigné ...
-    >>> Ne marche pas !! :(
-    cond2 = (
-        (Bool(Eval('latest_book', False)) == False) |
-        ((Bool(Eval('latest_book', True)) != True) &
-         (Eval('publishing_date', None) == None)))
-
-    latest_book = fields.Function(
-        fields.Many2One('library.book', 'Latest Book',
-                        states={'invisible': cond2},
-                        depends=["publishing_date"]),
-        'getter_latest_book')"""
-
-    def getter_age(self, name):
+    """def getter_age(self, name):
         if not self.birth_date:
             return None
         end_date = self.death_date or datetime.date.today()
         age = end_date.year - self.birth_date.year
         if (end_date.month, end_date.day) < (
-            self.birth_date.month, self.birth_date.day):
+                self.birth_date.month, self.birth_date.day):
             age -= 1
-        return age
+        return age"""
 
     def getter_genres(self, name):
         genres = set()
@@ -149,7 +138,7 @@ class Author(ModelSQL, ModelView):
                                   ).select(book.author, book.id))
         for author_id, book in cursor.fetchall():
             result[author_id] = book
-        return result if result else None
+        return result
 
     @classmethod
     def getter_number_of_books(cls, authors, name):
@@ -161,7 +150,6 @@ class Author(ModelSQL, ModelView):
         cursor.execute(*book.select(book.author, Count(book.id),
                                     where=book.author.in_([x.id for x in authors]),
                                     group_by=[book.author]))
-
         for author_id, count in cursor.fetchall():
             result[author_id] = count
         return result
@@ -169,6 +157,35 @@ class Author(ModelSQL, ModelView):
     @classmethod
     def searcher_genres(cls, name, clause):
         return []
+
+    @fields.depends('birth_date', 'death_date')
+    def on_change_with_age(self, name=None):
+        if not self.birth_date:
+            return None
+        end_date = self.death_date or datetime.date.today()
+        age = end_date.year - self.birth_date.year
+        if (end_date.month, end_date.day) < (
+            self.birth_date.month, self.birth_date.day):
+            age -= 1
+        return age
+
+    @fields.depends('books')
+    def on_change_books(self):
+        if not self.books:
+            self.genres = []
+            self.number_of_books = 0
+            return
+        self.number_of_books, genres = 0, set()
+        for book in self.books:
+            self.number_of_books += 1
+            if book.genre:
+                genres.add(book.genre)
+        self.genres = list(genres)
+
+    @fields.depends('birth_date')
+    def on_change_birth_date(self):
+        if not self.birth_date:
+            self.death_date = None
 
 
 class Book(ModelSQL, ModelView):
@@ -182,6 +199,8 @@ class Book(ModelSQL, ModelView):
                                   'Exemplaries')
     title = fields.Char('Title', required=True)
     genre = fields.Many2One('library.genre', 'Genre', ondelete='RESTRICT',
+                            domain=[('editors', '=', Eval('editor'))],
+                            depends=['editor'],
                             required=False)
     editor = fields.Many2One('library.editor', 'Editor', ondelete='RESTRICT',
                              domain=[If(
@@ -189,7 +208,6 @@ class Book(ModelSQL, ModelView):
                                  [('creation_date', '<=', Eval('publishing_date'))],
                                  [])],
                              required=True, depends=['publishing_date'])
-    editor_genre = fields.Function(fields.Many2One('library.editor', 'Editor Genre'), "getter_editor_genre")
     isbn = fields.Char('ISBN', size=13,
                        help='The International Standard Book Number')
     publishing_date = fields.Date('Publishing date')
@@ -206,6 +224,38 @@ class Book(ModelSQL, ModelView):
     latest_exemplary = fields.Function(
         fields.Many2One('library.book.exemplary', 'Latest exemplary'),
         'getter_latest_exemplary')
+
+    @classmethod
+    def __setup__(cls):
+        super().__setup__()
+        t = cls.__table__()
+        cls._sql_constraints += [
+            ('author_title_uniq', Unique(t, t.author, t.title),
+             'The title must be unique per author!'),
+        ]
+        cls._error_messages.update({
+            'invalid_isbn': 'ISBN should only be digits',
+            'bad_isbn_size': 'ISBN must have 13 digits',
+            'invalid_isbn_checksum': 'ISBN checksum invalid',
+        })
+
+    @classmethod
+    def validate(cls, books):
+        for book in books:
+            if not book.isbn:
+                continue
+            try:
+                if int(book.isbn) < 0:
+                    raise ValueError
+            except ValueError:
+                cls.raise_user_error('invalid_isbn')
+            if len(book.isbn) != 13:
+                cls.raise_user_error('bad_isbn_size')
+            checksum = 0
+            for idx, digit in enumerate(book.isbn):
+                checksum += int(digit) * (1 if idx % 2 else 3)
+            if checksum % 10:
+                cls.raise_user_error('invalid_isbn_checksum')
 
     def getter_latest_exemplary(self, name):
         latest = None
@@ -232,47 +282,41 @@ class Book(ModelSQL, ModelView):
             result[book_id] = count
         return result
 
+    @fields.depends('summary', 'description')
+    def on_change_with_description(self):
+        if not self.description:
+            self.description = self.summary
+        return self.description
+
+    @fields.depends('editor', 'genre')
+    def on_change_editor(self):
+        #import web_pdb; web_pdb.set_trace()
+        if self.editor:
+            if len(self.editor.genres) == 1:
+                self.genre = self.editor.genres[0]
+            else:
+                if self.genre not in self.editor.genres:
+                    self.genre = None
     @classmethod
-    def __setup__(cls):
-        super().__setup__()
-        # Gestion de la table Book sur l'unicité du titre pour un auteur
-        t = cls.__table__()
-        cls._sql_constraints += [
-            ('author_title_uniq', Unique(t, t.author, t.title),
-             'The pair author/title must be unique!'),
-        ]
-        #gestion des messages d'erreur de la méthode de classe validate.
-        cls._error_messages.update({
-            'invalid_isbn': 'ISBN should only be digits',
-            'invalid_isbn_length': 'ISBN should have 13 digits',
-            'invalid_isbn_check_digit': 'The check digit has failed',
-        })
+    def default_exemplaries(cls):
+        Exemplary = Pool().get('library.book.exemplary')
+        exemplary = Exemplary.__table__()
+        cursor = Transaction().connection.cursor()
+        cursor.execute(*exemplary.select(Max(exemplary.identifier)))
+        #import web_pdb; web_pdb.set_trace()
+        max_identifier = cursor.fetchone()[0]
+        exemplaries = [{}]
+        exemplaries[0]['identifier'] = str(int(max_identifier) + 1)
+        return exemplaries
 
-    @classmethod
-    def validate(cls, books):
-        for book in books:
-            if not book.isbn:
-                continue
-            try:
-                if int(book.isbn) < 0:
-                    raise ValueError
-            except ValueError as e:
-                cls.raise_user_error('invalid_isbn', str(e))
 
-            try:
-                if len(book.isbn) != 13:
-                    raise ValueError
-            except ValueError as e:
-                cls.raise_user_error('invalid_isbn_length', str(e))
-
-            check_digit_sum = 0
-            for i, num in enumerate(book.isbn):
-                if (i + 1) % 2 == 0:
-                    check_digit_sum += int(num) * 3
-                else:
-                    check_digit_sum += int(num)
-            if check_digit_sum % 10 != 0:
-                cls.raise_user_error('invalid_isbn_check_digit')
+    """@classmethod
+    def default_exemplaries(cls):
+        return [{}]
+    """
+    @fields.depends('exemplaries')
+    def on_change_with_number_of_exemplaries(self):
+        return len(self.exemplaries)
 
 
 class Exemplary(ModelSQL, ModelView):
@@ -288,9 +332,6 @@ class Exemplary(ModelSQL, ModelView):
                                        domain=['OR', ('acquisition_price', '=', None),
                                                ('acquisition_price', '>', 0)])
 
-    def get_rec_name(self, name):
-        return '%s: %s' % (self.book.rec_name, self.identifier)
-
     @classmethod
     def __setup__(cls):
         super().__setup__()
@@ -300,33 +341,9 @@ class Exemplary(ModelSQL, ModelView):
              'The identifier must be unique!'),
         ]
 
+    def get_rec_name(self, name):
+        return '%s: %s' % (self.book.rec_name, self.identifier)
 
-'''Homework
-First of all you should practice with pyson and domains. Here are some tests
-(some do not have a solution though), assuming "A", "B", and "C" are fields on the same model:
-'''
-#- The value of "A" should be greater than 0 if "B" is greater than "C". If either "B" or "C" are not defined, "A" should be "0"
-
-'''domain=[If(Eval('B') > Eval('C'),
-            [('A', '>', 0)],
-            If(['OR',
-                (Eval('B'), '=', None),(Eval('C'), '=', None)],
-                [('A', '=', 0)],
-                [] ))]'''
-
-#- "A" should be not null if "B.x" is greater than "0"
-
-'''=> pas possible,  Eval ne support pas les champs indirects'''
-
-#- The field "x" of field "A" should be greater than field "y" on "A"
-
-'''=> pas possible,  Eval ne support pas les champs indirects'''
-
-#- The field "x" of field "A" should be greater than field "B" or equal to field "C"
-
-'''domain=['OR',
-        ('A.x', '>', Eval('B')),
-        ('A.x', '=', Eval('C'))
-        ]
-
-'''
+    @classmethod
+    def default_acquisition_date(cls):
+        return datetime.date.today()

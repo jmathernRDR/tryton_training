@@ -12,8 +12,6 @@
         <field name="genre" widget="selection"/>
         <label name="editor"/>
         <field name="editor"/>
-        <label name="editor genre"/>
-        <field name="editor_genre"/>
         <label name="publishing_date"/>
         <field name="publishing_date"/>
         <label name="isbn"/>
