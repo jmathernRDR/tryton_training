@@ -3,7 +3,6 @@ import datetime
 from sql import Window
 from sql.conditionals import Coalesce
 from sql.aggregate import Count, Max
-from sqlalchemy import desc
 
 from trytond.pool import Pool
 from trytond.transaction import Transaction
