@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<form>
+    <label name="final_book"/>
+    <field name="final_book" colspan="4"/> 
+    <!-- <label name="books"/>
+    <field name="books" invisible="1"/> 
+    -->
+</form>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<form>
+    <label name="number_of_exemplaries"/>
+    <field name="number_of_exemplaries" readonly="1"/>
+    <label name="books"/>
+    <field name="books" colspan="4"/> 
+    <label name="num_book_master"/>
+    <field name="num_book_master"/>
+</form>

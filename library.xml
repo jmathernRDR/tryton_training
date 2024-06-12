@@ -101,7 +101,7 @@
         <record model="ir.ui.view" id="book_view_list">
             <field name="model">library.book</field>
             <field name="type">tree</field>
-            <field name="name">book_list</field>
+            <field name= "name">book_list</field>
         </record>
         <record model="ir.action.act_window" id="act_book">
             <field name="name">Books</field>
@@ -130,6 +130,20 @@
             <field name="model">library.book.exemplary</field>
             <field name="type">tree</field>
             <field name="name">exemplary_list</field>
+        </record>
+        <record model="ir.action.act_window" id="act_exemplary">
+            <field name="name">Exemplaries</field>
+            <field name="res_model">library.book.exemplary</field>
+        </record>
+        <record model="ir.action.act_window.view" id="act_exemplary_view_list">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="exemplary_view_list"/>
+            <field name="act_window" ref="act_exemplary"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_exemplary_view_form">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="exemplary_view_form"/>
+            <field name="act_window" ref="act_exemplary"/>
         </record>
     </data>
 </tryton>
