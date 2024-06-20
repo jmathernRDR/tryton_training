@@ -10,6 +10,8 @@ from trytond.model import ModelSQL, ModelView, fields
 from trytond.model import Unique
 from trytond.pyson import Eval, If, Bool
 
+from trytond.modules.library_borrow.library import Checkout 
+
 
 __all__ = [
     'Genre',
@@ -224,6 +226,9 @@ class Book(ModelSQL, ModelView):
                 'bad_isbn_size': 'ISBN must have 13 digits',
                 'invalid_isbn_checksum': 'ISBN checksum invalid',
                 })
+        cls._buttons.update({
+        'create_exemplaries': {},
+        })
 
     @classmethod
     def validate(cls, books):
@@ -292,6 +297,10 @@ class Book(ModelSQL, ModelView):
             result[book_id] = count
         return result
 
+    @classmethod
+    @ModelView.button_action('library.act_create_exemplaries')
+    def create_exemplaries(cls, books):
+        pass
 
 class Exemplary(ModelSQL, ModelView):
     'Exemplary'
@@ -305,6 +314,7 @@ class Exemplary(ModelSQL, ModelView):
     acquisition_price = fields.Numeric('Acquisition Price', digits=(16, 2),
         domain=['OR', ('acquisition_price', '=', None),
             ('acquisition_price', '>', 0)])
+    
 
     @classmethod
     def __setup__(cls):

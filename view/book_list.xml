@@ -5,4 +5,8 @@
     <field name="genre"/>
     <field name="isbn"/>
     <field name="publishing_date"/>
+    <field name="available_book" width="200"/>
+    <!--
+
+    -->
 </tree>
